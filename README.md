@@ -1,1 +1,1 @@
-"# bootVue" 
+# bootVue
