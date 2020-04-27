@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>用户管理界面</title>
+    <link rel="stylesheet" href="./bootvue/css/bootstrap.css">
+    <script src="./bootvue/js/vue.js"></script>
+    <script src="./bootvue/js/axios.min.js"></script>
+</head>
+<body>
+
+<!--导航-->
+
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#">用户管理</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="#">欢迎:XXX</a></li>
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<div id="app">
+
+    <!--中心布局-->
+
+    <div class="container-fluid">
+
+        <!--    搜索框-->
+
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2">
+                <form class="form-inline">
+                    <div class="form-group">
+                        <label for="searchname">姓名</label>
+                        <input type="text" class="form-control" v-model="searchName" id="searchname">
+                    </div>
+                    <div class="form-group">
+                        <label for="searchCode">电话号码</label>
+                        <input type="text" class="form-control" v-model="searchCode" id="searchCode">
+                    </div>
+                    <button type="button" class="btn btn-default" @click="searchLike">搜索</button>
+                </form>
+            </div>
+        </div>
+
+
+        <div class="row" style="margin-top: 20px">
+
+            <!--表格-->
+            <div class="col-md-8">
+                <table class="table table-bordered table-striped table-hover">
+                    <tr>
+                        <th>ID</th>
+                        <th>姓名</th>
+                        <th>年龄</th>
+                        <th>薪资</th>
+                        <th>电话号码</th>
+                        <th>操作</th>
+                    </tr>
+                    <tbody>
+                    <tr v-for="user,index in users" :key="user.id">
+                        <td>{{user.id}}</td>
+                        <td>{{user.name}}</td>
+                        <td>{{user.age}}</td>
+                        <td>{{user.salary}}</td>
+                        <td>{{user.phonecode}}</td>
+                        <td>
+                            <button class="btn btn-danger" @click="deleteuserinfo(user.id)">删除</button> &nbsp;&nbsp;
+                            <button class="btn btn-primary" @click="findoneuser(user.id)">修改</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+
+            <!--        修改区域-->
+            <div class="col-md-4">
+                <form>
+                    <div class="form-group">
+                        <label for="name">姓名</label>
+                        <input type="text" class="form-control" v-model="user.name" id="name" placeholder="请输入姓名">
+                    </div>
+                    <div class="form-group">
+                        <label for="age">年龄</label>
+                        <input type="text" class="form-control" v-model="user.age" id="age" placeholder="请输入密码">
+                    </div>
+                    <div class="form-group">
+                        <label for="salary">薪资</label>
+                        <input type="text" class="form-control" v-model="user.salary" id="salary" placeholder="请输入薪资">
+                    </div>
+                    <div class="form-group">
+                        <label for="phonecode">电话号码</label>
+                        <input type="text" class="form-control" v-model="user.phonecode" id="phonecode"
+                               placeholder="请输入电话号码">
+                    </div>
+                    <button type="button" class="btn btn-default" @click="saveUserInfo">提交</button>
+                    <button type="button" class="btn btn-danger" @click="resetuserinfo">重置</button>
+                </form>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<!--{id:"21",name:"小王",age:23,salary:23,phonecode:"123456"},-->
+<!--{id:"21",name:"小陈",age:23,salary:23,phonecode:"123456"}-->
+
+<script>
+    const app = new Vue({
+        el: "#app",
+        data: {
+            users: [],
+            user: {},
+            searchName:"",
+            searchCode:""
+        },
+        methods: {
+            saveUserInfo: function () {
+                console.log(this.user);
+                let _this = this
+                axios.post("http://localhost:6327/user/user/save", this.user)
+                    .then(function (response) {
+                        console.log(response);
+                        if (response.data.statecode === "200") {
+                            _this.findAll();
+                        } else {
+                            alert(response.data.msg);
+                        }
+                    })
+                    .catch(e => console.warn(e));
+            },
+            findAll: function () {
+                axios.get("http://localhost:6327/user/user/findall")
+                    .then((response) => {
+                        this.users = response.data
+                    })
+                    .catch(err => console.log(err));
+            },
+            resetuserinfo: function () {
+                this.user = {};
+            },
+            deleteuserinfo: function (id) {
+                id = id.toString();
+                console.log(id);
+                let _this = this;
+                if (window.confirm("确定要删除这条记录？")) {
+                    axios.get("http://localhost:6327/user/user/delete?id=" + id)
+                        .then(function (response) {
+                            if (response.data.statecode === "200") {
+                                _this.findAll();
+                            } else {
+                                alert(response.data.msg);
+                            }
+                        }).catch(e => console.log(e))
+                }
+            },
+            findoneuser:function (id) {
+                id = id.toString();
+                console.log(id);
+                _this = this;
+                axios.get("http://localhost:6327/user/user/findoneuser?id="+id)
+                    .then(function (response) {
+                        console.log(response.data);
+                        _this.user = response.data;
+                    }).catch(e => console.error(e));
+            },
+            searchLike:function () {
+                console.log(this.searchName);
+                console.log(this.searchCode);
+               let that = this;
+                axios.get("http://localhost:6327/user/user/findNameOrPhonecode?name="+this.searchName+"&phonecode="+this.searchCode)
+                    .then(function (response) {
+                        console.log(response.data);
+                      that.users = response.data;
+                    })
+            }
+        },
+        created: function () {
+            this.findAll();
+        }
+    })
+</script>
+</body>
+</html>
